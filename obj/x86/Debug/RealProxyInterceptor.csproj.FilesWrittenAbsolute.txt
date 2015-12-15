@@ -1,0 +1,5 @@
+/home/alberto/Dev/RealProxyInterceptor/RealProxyInterceptor/obj/x86/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
+/home/alberto/Dev/RealProxyInterceptor/RealProxyInterceptor/bin/Debug/RealProxyInterceptor.exe.mdb
+/home/alberto/Dev/RealProxyInterceptor/RealProxyInterceptor/bin/Debug/RealProxyInterceptor.exe
+/home/alberto/Dev/RealProxyInterceptor/RealProxyInterceptor/obj/x86/Debug/RealProxyInterceptor.exe
+/home/alberto/Dev/RealProxyInterceptor/RealProxyInterceptor/obj/x86/Debug/RealProxyInterceptor.exe.mdb
