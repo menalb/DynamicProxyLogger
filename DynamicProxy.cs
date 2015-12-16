@@ -5,39 +5,71 @@ using System.Reflection;
 
 namespace RealProxyInterceptor
 {
-	public class DynamicProxy<T> : RealProxy
-	{
-		private readonly T _decorated;
+  public class DynamicProxy<T> : RealProxy
+  {
+    private readonly T _decorated;
 
-		public DynamicProxy (T decorated) : base(typeof(T))
-		{
-			_decorated = decorated;
-		}
+    private Action<string> _onBeforeExecutingAction;
+    private Action<string> _onAfterExecutingAction;
+    private Action<string,Exception> _onCatchingExceptionAction;
 
-		private void Log(string msg, object arg = null)
-		{
-			Console.ForegroundColor = ConsoleColor.Red;
-			Console.WriteLine (msg, arg);
-			Console.ResetColor ();
-		}
+    public DynamicProxy(T decorated) : base(typeof(T))
+    {
+      _decorated = decorated;
+    }
 
-		public override IMessage Invoke (IMessage msg)
-		{
-			var methodCall = msg as IMethodCallMessage;
-			var methodInfo = methodCall.MethodBase as MethodInfo;
-			Log ("In Dynamic Proxy - Before executing '{0}'", methodCall.MethodName);
+    public DynamicProxy<T> OnBeforeExecuting(Action<string> onBeforeExecutingAction)
+    {
+      _onBeforeExecutingAction = onBeforeExecutingAction;
+      return this;
+    }
 
-			try
-			{
-				var result = methodInfo.Invoke(_decorated,methodCall.InArgs);
-				Log ("In Dynamic Proxy - After executing '{0}'", methodCall.MethodName);
-				return new ReturnMessage(result,null,0,methodCall.LogicalCallContext,methodCall);
-			}
-			catch(Exception e) 
-			{
-				Log (string.Format ("In Dynamic Proxy - Exception {0} executing '{1}'",e),methodCall.MethodName);
-				return new ReturnMessage (e, methodCall);
-			}
-		}
-	}
+    public DynamicProxy<T> OnAfterExecuting(Action<string> onAfterExecutingAction)
+    {
+      _onAfterExecutingAction = onAfterExecutingAction;
+      return this;
+    }
+
+    public DynamicProxy<T> OnCatchingException(Action<string,Exception> onCatchingExceptionAction)
+    {
+      _onCatchingExceptionAction = onCatchingExceptionAction;
+      return this;
+    }
+
+    private void BeforeExecuting(string methodName)
+    {
+      if (_onBeforeExecutingAction != null)
+        _onBeforeExecutingAction(methodName);
+    }
+
+    private void AfterExecuting(string methodName)
+    {
+      if (_onAfterExecutingAction != null)        
+        _onAfterExecutingAction(methodName);
+    }
+
+    private void CatchingException(string methodName, Exception exception)
+    {
+      if (_onCatchingExceptionAction != null)        
+        _onCatchingExceptionAction(methodName,exception);
+    }
+
+    public override IMessage Invoke(IMessage msg)
+    {
+      var methodCall = msg as IMethodCallMessage;
+      var methodInfo = methodCall.MethodBase as MethodInfo;
+      BeforeExecuting(methodCall.MethodName);
+      try
+      {
+        var result = methodInfo.Invoke(_decorated, methodCall.InArgs);
+        AfterExecuting(methodCall.MethodName);
+        return new ReturnMessage(result, null, 0, methodCall.LogicalCallContext, methodCall);
+      }
+      catch (Exception exception)
+      {
+        CatchingException(methodCall.MethodName, exception);
+        return new ReturnMessage(exception, methodCall);
+      }
+    }
+  }
 }
